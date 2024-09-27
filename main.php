@@ -1,3 +1,21 @@
+<?php
+session_start();
+
+if (!isset($_SESSION["admin_user"])) {
+?>
+  <script>
+    window.location = "index.php";
+  </script>
+<?php
+}else if (isset($_SESSION["subadmin_user"])){
+  ?>
+  <script>
+    window.location = "submain.php";
+  </script>
+<?php
+}
+?>
+
 
 <!DOCTYPE html>
 <html lang="en">
@@ -19,12 +37,6 @@
   <!-- endinject -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
     integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
-    <!-- Bootstrap CSS -->
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" />
-
-<!-- Bootstrap JS (Ensure this is placed before your closing </body> tag) -->
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
-
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" />
 
@@ -57,7 +69,7 @@
                           text-align: center;
                         ">
                     <h1 class="mb-0">
-                    <i class="bi bi-clock iconSize"></i>
+                      <i class="bi bi-graph-up-arrow iconSize"></i>
                     </h1>
                     <h4 class="mb-2 ms-4 text-md-center text-lg-center">
                       Day Start Process
@@ -641,31 +653,6 @@
               </div>
             </div>
           </div>
-
-          <div class="col-md-4 grid-margin stretch-card cardSize">
-          <div class="card" style="cursor: pointer;" onclick="window.location.href='hrm.php'">
-              <div class="card-body">
-                <div
-                  class="d-flex align-items-center justify-content-center justify-content-md-center justify-content-xl-center flex-wrap mb-4">
-                  <div style="
-                          display: flex;
-                          flex-direction: column;
-                          align-items: center;
-                          justify-content: center;
-                          text-align: center;
-                        ">
-                    <h1 class="mb-0">
-                    <i class="bi bi-person-lines-fill iconSize"></i>
-                    </h1>
-                    <h4 class="mb-2 ms-0 text-md-center text-lg-center">
-                    HRM
-                    </h4>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
         </div>
       </div>
       <!-- content-wrapper ends -->
@@ -674,7 +661,7 @@
         <div class="card">
           <div class="card-body">
             <div class="d-sm-flex justify-content-center justify-content-sm-between">
-              <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2025
+              <span class="text-muted text-center text-sm-left d-block d-sm-inline-block">Copyright © 2024
                 <a href="https://www.bootstrapdash.com/" class="text-muted" target="_blank">Bootstrapdash</a>. All
                 rights reserved.</span>
               <span class="float-none float-sm-right d-block mt-1 mt-sm-0 text-center text-muted">Hand-crafted & made

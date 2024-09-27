@@ -19,6 +19,11 @@ require_once "connection_db.php";
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="assets/vendors/font-awesome/css/font-awesome.min.css" />
 
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+
+
     <link rel="stylesheet" href="style.css" />
     <link rel="icon" href="images/logo.png">
 </head>
@@ -32,102 +37,105 @@ require_once "connection_db.php";
             <div class="content-wrapper">
                 <div class="row">
 
-                        <div class="col-lg-12 grid-margin stretch-card">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row">
+                    <div class="col-lg-12 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
 
-                                        <?php
-                                        function generateNextCode($lastCode)
-                                        {
-                                            $prefix = 'BILLNO/';
-                                            $number = (int)str_replace($prefix, '', $lastCode);
-                                            $nextNumber = $number + 1;
+                                    <?php
+                                    function generateNextCode($lastCode)
+                                    {
+                                        $prefix = 'BILLNO/';
+                                        $number = (int)str_replace($prefix, '', $lastCode);
+                                        $nextNumber = $number + 1;
 
-                                            $newCode = $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+                                        $newCode = $prefix . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
 
-                                            return $newCode;
+                                        return $newCode;
+                                    }
+
+                                    $queryAdminUser = "SELECT * FROM billing_tb ORDER BY job_no DESC LIMIT 1";
+                                    $resultAdminUser = $db->query($queryAdminUser);
+
+                                    if ($resultAdminUser) {
+
+                                        if ($resultAdminUser->num_rows != 0) {
+                                            $row = $resultAdminUser->fetch_assoc();
+                                            $lastCode = $row['job_no'];
+                                        } else {
+                                            $lastCode = 'BILLNO/000000';
                                         }
 
-                                        $queryAdminUser = "SELECT * FROM billing_tb ORDER BY job_no DESC LIMIT 1";
-                                        $resultAdminUser = $db->query($queryAdminUser);
+                                        $nextCode = generateNextCode($lastCode);
+                                    }
 
-                                        if ($resultAdminUser) {
+                                    ?>
 
-                                            if ($resultAdminUser->num_rows != 0) {
-                                                $row = $resultAdminUser->fetch_assoc();
-                                                $lastCode = $row['job_no'];
-                                            } else {
-                                                $lastCode = 'BILLNO/000000';
-                                            }
-
-                                            $nextCode = generateNextCode($lastCode);
-                                        }
-
-                                        ?>
-
-                                        <div class="col-12 col-md-6">
-                                            <h1 style="border: none;" class="card-title form-control fs-4"><i class="fa fa-spin fa-cog fs-3"></i> Daily Billing System / Bill No : <input id="billId" style="border: none; width: 230px;" class="fs-3" type="text" disabled value="<?php echo  $nextCode; ?>"></h1>
-                                        </div>
-                                        <div class="col-5">
-                                            <div class="row">
-                                                <div class="col-6 text-end">
-                                                    <h5 class="form-control" style="border: none;">Date :</h5>
-                                                </div>
-                                                <div class="col-6 aling-iteam-end">
-                                                    <input id="date" class="form-control scleHover" placeholder="Date" type="date">
-                                                </div>
+                                    <div class="col-12 col-md-6">
+                                        <h1 style="border: none;" class="card-title form-control fs-4"><i class="fa fa-spin fa-cog fs-3"></i> Daily Billing System / Bill No : <input id="billId" style="border: none; width: 230px;" class="fs-3" type="text" disabled value="<?php echo  $nextCode; ?>"></h1>
+                                    </div>
+                                    <div class="col-5">
+                                        <div class="row">
+                                            <div class="col-6 text-end">
+                                                <h5 class="form-control" style="border: none;">Date :</h5>
+                                            </div>
+                                            <div class="col-6 aling-iteam-end">
+                                                <input id="date" class="form-control scleHover" placeholder="Date" type="date">
                                             </div>
                                         </div>
-
-
                                     </div>
 
-                                </div>
-                            </div>
-                        </div>
 
+                                    <div class="col-12 col-md-12 text-end">
+                                        <h1 style="border: none;" class="card-title form-control fs-4">Unpaid Bill : <select onchange="loradUnpaidBillDetails();" id="unpaidDetails" style="border: none; width: 230px;" class="fs-5 text-dark " type="text" value="">
+                                                <option value="0">Select</option>
+                                                <?php
+                                                $queryun = "SELECT * FROM billing_tb WHERE status_paid = ?";
+                                                $stmtun = $db->prepare($queryun);
 
-                        <div class="col-lg-12 grid-margin stretch-card">
-                            <div class="card">
-                                <div class="card-body">
-                                    <div class="row">
-
-
-
-                                        <div class="col-12 col-md-12 text-end">
-                                            <h1 style="border: none;" class="card-title form-control fs-4">Unpaid Bill : <select onchange="loradUnpaidBillDetails();" id="unpaidDetails" style="border: none; width: 230px;" class="fs-5 text-dark " type="text" value="">
-                                                    <option value="0">Select</option>
-                                                    <?php
-                                                    $queryun = "SELECT * FROM billing_tb WHERE status_paid = ?";
-                                                    $stmtun = $db->prepare($queryun);
-
-                                                    if ($stmtun) {
-                                                        $billId = 0;
-                                                        $stmtun->bind_param("s", $billId);
-                                                        $stmtun->execute();
-                                                        $resultun = $stmtun->get_result();
-                                                        for ($i = 0; $i < $resultun->num_rows; $i++) {
-                                                            $unpaidrow = $resultun->fetch_assoc();
-                                                    ?>
-                                                            <option value="<?php echo $unpaidrow['id']; ?>"><?php echo $unpaidrow['job_no']; ?></option>
-                                                    <?php
-                                                        }
+                                                if ($stmtun) {
+                                                    $billId = 0;
+                                                    $stmtun->bind_param("s", $billId);
+                                                    $stmtun->execute();
+                                                    $resultun = $stmtun->get_result();
+                                                    for ($i = 0; $i < $resultun->num_rows; $i++) {
+                                                        $unpaidrow = $resultun->fetch_assoc();
+                                                ?>
+                                                        <option value="<?php echo $unpaidrow['id']; ?>"><?php echo $unpaidrow['job_no']; ?></option>
+                                                <?php
                                                     }
-                                                    ?>
+                                                }
+                                                ?>
 
-                                                </select> </h1>
-                                        </div>
-
-
-
+                                            </select> </h1>
                                     </div>
 
+
                                 </div>
+
                             </div>
                         </div>
+                    </div>
 
-                        
+
+                    <div class="col-lg-12 grid-margin stretch-card">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="row">
+
+
+
+
+
+
+
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+
                     <div class="col-12" id="onlordActivedive">
 
 
@@ -154,27 +162,34 @@ require_once "connection_db.php";
 
                                                 <tr>
                                                     <td>
+
+
                                                         <div style="display: inline-block;">
-                                                            <Select id="custormerSearchMobileValue" onchange="getCustormer()" style="display: inline-block; width: 250px;" class="form-control card-title">
-                                                                <option value="0">Select</option>
-                                                                <?php
-                                                                $queryCategory = "SELECT * FROM customer";
-                                                                $resultCategory = $db->query($queryCategory);
-                                                                if ($resultCategory) {
-                                                                    for ($i = 0; $i < $resultCategory->num_rows; $i++) {
+                                                            <div class="dropdown">
+                                                                <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterFunction()">
+                                                                <div id="dropdownList" class="dropdown-list form-control ">
 
-                                                                        $row = $resultCategory->fetch_assoc();
-                                                                ?>
-                                                                        <option value="<?php echo $row['id']; ?>"><?php echo $row['customer']; ?></option>
-                                                                <?php
+                                                                    <?php
+                                                                    $queryCategory = "SELECT * FROM customer";
+                                                                    $resultCategory = $db->query($queryCategory);
+                                                                    if ($resultCategory) {
+                                                                        for ($i = 0; $i < $resultCategory->num_rows; $i++) {
+
+                                                                            $row = $resultCategory->fetch_assoc();
+                                                                    ?>
+                                                                            <div onclick="getCustormer(<?php echo $row['id']; ?>)" value="<?php echo $row['id']; ?>" ondblclick="selectOption('<?php echo $row['customer']; ?>')"><?php echo $row['customer']; ?><input id="custormerSearchMobileValue" type="text" value="<?php echo $row['id']; ?>" class="d-none"></div>
+
+                                                                    <?php
+                                                                        }
+                                                                    } else {
+                                                                        echo "Error: " . $db->error;
                                                                     }
-                                                                } else {
-                                                                    echo "Error: " . $db->error;
-                                                                }
 
-                                                                ?>
+                                                                    ?>
+                                                                </div>
+                                                            </div>
 
-                                                            </Select> <i id="myBtn" onclick="popupCustoremerAddViwe();" class="fa fa-plus-square fs-4 text-info"></i>
+                                                            <i id="myBtn" onclick="popupCustoremerAddViwe();" class="fa fa-plus-square fs-4 text-info"></i>
                                                         </div>
 
                                                     </td>
@@ -451,13 +466,13 @@ require_once "connection_db.php";
                                                         </Select>
                                                     </td>
                                                     <td>
-                                                        <input onkeyup="calculateValu();" id="qty" class="form-control inpuFieldsBorders" type="text" />
+                                                        <input onkeyup="calculateValu();" id="qty" value="0" class="form-control inpuFieldsBorders text-end" type="text" />
                                                     </td>
                                                     <td>
-                                                        <input onkeyup="calculateValu();" id="rate" class="form-control inpuFieldsBorders" type="text" />
+                                                        <input onkeyup="calculateValu();" id="rate" value="0" class="form-control inpuFieldsBorders text-end" type="text" />
                                                     </td>
                                                     <td>
-                                                        <input id="totalValueData" class="form-control inpuFieldsBorders" type="text" disabled />
+                                                        <input id="totalValueData" value="0.00" class="form-control inpuFieldsBorders text-end" type="text" disabled />
                                                     </td>
 
                                                 </tr>
@@ -467,7 +482,7 @@ require_once "connection_db.php";
                                         <br>
                                         <br>
                                         <div class="text-end">
-                                            <button onclick="addRowIteamListing()" class="btn btn-info">Add Row</button>
+                                            <button onclick="addRowIteamListings()" class="btn btn-info">Add Row</button>
                                         </div>
 
                                         <br><br>
@@ -481,15 +496,11 @@ require_once "connection_db.php";
                         <script>
                             let rowaddIteamListing = 0;
 
-
-
-                            function addRowIteamListing() {
+                            function addRowIteamListings() {
 
                                 var product = document.getElementById("product").value;
                                 var qty = document.getElementById("qty").value;
                                 var rate = document.getElementById("rate").value;
-                                var currencyRateSelect = document.getElementById("currencyToIteamSelect").value;
-                                var currencyRate = document.getElementById("currencyRate").value;
 
                                 let total = 0;
                                 total = qty * rate;
@@ -498,28 +509,119 @@ require_once "connection_db.php";
 
 
                                 const newRow = `
+                <tr>
+                    <td><i onclick="deleteRow(this)" class="fa fa-trash-o fs-5 text-danger"></i></td>
+                    <td>
+                        <input name="product" value="${product}" class="form-control inpuFieldsBorders" type="text" />
+                    </td>                                                
+                    <td>
+                        <input name="qty" onkeyup="calculateValuDiscountWith(${rowaddIteamListing})" id="qty${rowaddIteamListing}" value="${qty}" class="form-control inpuFieldsBorders" type="number" />
+                    </td>
+                    <td>
+                        <input name="rate" onkeyup="calculateValuDiscountWith(${rowaddIteamListing})" id="rate${rowaddIteamListing}" value="${rate}" class="form-control inpuFieldsBorders" type="text" />
+                    </td>
+
+                  
+                    <td>
+                        <input name="discount" onkeyup="calculateValuDiscountWith(${rowaddIteamListing})" id="dicountPresentage${rowaddIteamListing}"  value="0.00" class="form-control inpuFieldsBorders" type="text" />
+                    </td>
+                    <td>
+                        <input name="" readonly id="discount${rowaddIteamListing}" value="0.00" class="form-control inpuFieldsBorders" type="text" />
+                    </td>                                              
+
+                      <td>
+                        <Select name="currencyNameId" id="currencyToIteamSelect${rowaddIteamListing}" onchange="currencyCalculate(${rowaddIteamListing});" class="form-control card-title">
+                            
+                            <?php
+
+                            $queryCategory = "SELECT * FROM currency";
+                            $resultCategory = $db->query($queryCategory);
+                            if ($resultCategory) {
+
+                            ?>
+
+<?php
+
+                                for ($i = 0; $i < $resultCategory->num_rows; $i++) {
+
+                                    $row = $resultCategory->fetch_assoc();
+?>
+                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['currencyName']; ?></option>
+                            <?php
+                                }
+                            } else {
+                                echo "Error: " . $db->error;
+                            }
+
+                            ?>
+
+                        </Select>
+                    </td>
+                    <td>
+                        <input name="" value="${total}" id="currencyRate${rowaddIteamListing}" class="form-control inpuFieldsBorders" type="text" />
+                    </td>
+
+                    <td>
+                        <input id="totalValue${rowaddIteamListing}" value="${total}" class="form-control inpuFieldsBorders" type="text" disabled />
+                    </td>                                               
+                   
+                </tr>
+`;
+
+                                document
+                                    .getElementById("iteamListingTableBody")
+                                    .insertAdjacentHTML("beforeend", newRow);
+
+
+                                if (rowaddIteamListing == 1) {
+                                    deleteRow(document.getElementById("firstRow"));
+                                }
+
+                                document.getElementById("product").selectOption = 0;
+                                document.getElementById("qty").value = "0";
+                                document.getElementById("rate").value = '0';
+                                document.getElementById("totalValueData").value = "0.00";
+                            }
+
+                            let rowaddIteamListingunpaid = 0;
+
+                            function addRowIteamListingUnpaid() {
+
+                                var productunpaid = document.getElementById("productunpaid").value;
+                                var qtyunpaid = document.getElementById("qtyupaid").value;
+                                var rateunpaid = document.getElementById("rateunpaid").value;
+                                let totalunpaid = 0;
+                                let finaltotalunpaid = 0;
+                                totalunpaid = qtyunpaid * rateunpaid;
+                                $finaltotalunpaid = 0;
+
+                                rowaddIteamListingunpaid++;
+
+
+                                const newRow = `
                                             <tr>
                                                 <td><i onclick="deleteRow(this)" class="fa fa-trash-o fs-5 text-danger"></i></td>
                                                 <td>
-                                                    <input name="product" value="${product}" class="form-control inpuFieldsBorders" type="text" />
+                                                    <input name="productunpaid" value="${productunpaid}" class="form-control inpuFieldsBorders" type="text" />
+                                                    <input type="hidden" name="hiddenPID" id="hiddenPID" class="d-none" value="0" />                                                   
                                                 </td>                                                
                                                 <td>
-                                                    <input name="qty" onkeyup="calculateValuDiscountWith(${rowaddIteamListing})" id="qty${rowaddIteamListing}" value="${qty}" class="form-control inpuFieldsBorders" type="number" />
+                                                    <input name="qtyunpaid" onkeyup="calculateValuDiscountWith(${rowaddIteamListingunpaid})" id="qty${rowaddIteamListingunpaid}" value="${qtyunpaid}" class="form-control inpuFieldsBorders" type="number" />
                                                 </td>
                                                 <td>
-                                                    <input name="rate" onkeyup="calculateValuDiscountWith(${rowaddIteamListing})" id="rate${rowaddIteamListing}" value="${rate}" class="form-control inpuFieldsBorders" type="text" />
+                                                    <input name="rateunpaid" onkeyup="calculateValuDiscountWith(${rowaddIteamListingunpaid})" id="rate${rowaddIteamListingunpaid}" value="${rateunpaid}" class="form-control inpuFieldsBorders" type="text" />
                                                 </td>
 
                                               
                                                 <td>
-                                                    <input name="discount" onkeyup="calculateValuDiscountWith(${rowaddIteamListing})" id="dicountPresentage${rowaddIteamListing}"  value="0.00" class="form-control inpuFieldsBorders" type="text" />
+                                                    <input name="discountunpaid" onkeyup="calculateValuDiscountWith(${rowaddIteamListingunpaid})" id="dicountPresentage${rowaddIteamListingunpaid}"  value="0.00" class="form-control inpuFieldsBorders" type="text" />
                                                 </td>
                                                 <td>
-                                                    <input name="" readonly id="discount${rowaddIteamListing}" value="0.00" class="form-control inpuFieldsBorders" type="text" />
+                                                    <input name="" readonly id="discount${rowaddIteamListingunpaid}" value="0.00" class="form-control inpuFieldsBorders" type="text" />
                                                 </td>                                              
 
                                                   <td>
-                                                    <Select name="currencyNameId" id="currencyToIteamSelect${rowaddIteamListing}" onchange="currencyCalculate(${rowaddIteamListing});" class="form-control card-title">
+                                                    <Select name="currencyunpaid" id="currencyToIteamSelect${rowaddIteamListingunpaid}" onchange="currencyCalculate(${rowaddIteamListingunpaid});" class="form-control card-title">
                                                         
                                                         <?php
 
@@ -547,18 +649,18 @@ require_once "connection_db.php";
                                                     </Select>
                                                 </td>
                                                 <td>
-                                                    <input name="" value="${total}" id="currencyRate${rowaddIteamListing}" class="form-control inpuFieldsBorders" type="text" />
+                                                    <input name="" value="${totalunpaid}" id="currencyRate${rowaddIteamListingunpaid}" class="form-control inpuFieldsBorders" type="text" disabled />
                                                 </td>
 
                                                 <td>
-                                                    <input id="totalValue${rowaddIteamListing}" value="${total}" class="form-control inpuFieldsBorders" type="text" disabled />
+                                                    <input id="totalValue${rowaddIteamListingunpaid}" value="${totalunpaid}" class="form-control inpuFieldsBorders" type="text" disabled />
                                                 </td>                                               
                                                
                                             </tr>
                             `;
 
                                 document
-                                    .getElementById("iteamListingTableBody")
+                                    .getElementById("iteamListingTableBodyUnpaid")
                                     .insertAdjacentHTML("beforeend", newRow);
 
 
@@ -566,14 +668,24 @@ require_once "connection_db.php";
                                     deleteRow(document.getElementById("firstRow"));
                                 }
 
-                                document.getElementById("product").value = 0;
-                                document.getElementById("currencyToIteamSelect").value = 0;
-                                document.getElementById("qty").value = "";
-                                document.getElementById("rate").value = '';
-                                document.getElementById("currencyToIteamSelect").value = 0;
-                                document.getElementById("currencyRate").value = "";
+                                document.getElementById("productunpaid").selectOption = 0;
+                                document.getElementById("qtyupaid").value = "0";
+                                document.getElementById("rateunpaid").value = "0";
                                 document.getElementById("totalValueData").value = "";
                             }
+
+
+
+
+
+
+
+
+
+
+
+                            // ?????
+
 
                             function discountadd() {
                                 var discountPresentage = document.getElementById("dicountPresentage").value;
@@ -600,7 +712,7 @@ require_once "connection_db.php";
                                                     <th>Discount</th>
                                                     <th>Currency</th>
                                                     <th>Currency Rate</th>
-                                                    <th>Total</th>
+                                                    <th>Total ( LKR )</th>
 
 
                                                 </tr>
@@ -670,7 +782,7 @@ require_once "connection_db.php";
                                     <br>
                                     <div class="col-12 text-end " style="display: inline-block;">
                                         <button style="display: inline-block;" onclick="saveUnpaidFunction();" class="btn btn-danger text-end  ">Unpaid</button>
-                                        <button style="display: inline-block;" onclick="saveUnpaidFunction();" class="btn btn-success text-end  ">Save Unpaid Data</button>
+                                        <button style="display: inline-block;" onclick="saveUnpaidFunction();" class="btn btn-success text-end d-none ">Save Unpaid Data</button>
                                         <button style="display: inline-block;" onclick="saveFunction();" class="btn btn-info text-end  ">Save Data</button>
 
 
@@ -681,217 +793,49 @@ require_once "connection_db.php";
 
                                 </div>
                             </div>
+                        
                         </div>
 
 
                         <div class="col-lg-12 grid-margin stretch-card">
                             <div class="card">
                                 <div class="card-body">
-                                    <h4 class="card-title">Commission Method Operator</h4>
-                                    <p class="card-description">
-
-                                    </p>
                                     <div class="table-responsive">
-
-                                        <table class="table">
+                                        <table class="table ">
+                                            <thead>
+                                                <tr>
+                                                    <th>Project Count</th>
+                                                    <th>Amount</th>
+                                                    <th>Discount</th>
+                                                    <th>Total</th>
+                                                </tr>
+                                            </thead>
                                             <tbody>
                                                 <tr>
-                                                    <th>Operator</th>
-                                                    <th>Amount</th>
-                                                    <th>Guide</th>
-                                                    <th>Amount</th>
-                                                    <th>Driver</th>
-                                                    <th>Vehicle No.</th>
-                                                    <th>Amount</th>
-                                                    <th>Total</th>
-                                                    <th></th>
-                                                </tr>
-
-                                                <tr>
-                                                    <td>
-                                                        <Select id="product" class="form-control card-title">
-                                                            <option value="0">Select</option>
-                                                            <?php
-                                                            $queryCategory = "SELECT * FROM operator";
-                                                            $resultCategory = $db->query($queryCategory);
-                                                            if ($resultCategory) {
-                                                                for ($i = 0; $i < $resultCategory->num_rows; $i++) {
-
-                                                                    $row = $resultCategory->fetch_assoc();
-                                                            ?>
-                                                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['officer_name']; ?></option>
-                                                            <?php
-                                                                }
-                                                            } else {
-                                                                echo "Error: " . $db->error;
-                                                            }
-
-                                                            ?>
-
-                                                        </Select>
-                                                    </td>
-                                                    <td>
-                                                        <input onkeyup="calculateValu();" id="qty" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-                                                    <td>
-                                                        <input onkeyup="calculateValu();" id="rate" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-                                                    <td>
-                                                        <input id="w" class="form-control inpuFieldsBorders" type="text" disabled />
-                                                    </td>
-                                                    <td>
-                                                        <Select onchange="currencyCalculate();" id="currencyToIteamSelect" class="form-control card-title">
-                                                            <option value="">Select</option>
-                                                            <?php
-                                                            $queryCategory = "SELECT * FROM driver";
-                                                            $resultCategory = $db->query($queryCategory);
-                                                            if ($resultCategory) {
-                                                                for ($i = 0; $i < $resultCategory->num_rows; $i++) {
-
-                                                                    $row = $resultCategory->fetch_assoc();
-                                                            ?>
-                                                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['driver_name']; ?></option>
-                                                            <?php
-                                                                }
-                                                            } else {
-                                                                echo "Error: " . $db->error;
-                                                            }
-
-                                                            ?>
-
-                                                        </Select>
-                                                    </td>
-                                                    <td>
-                                                        <input id="w" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-                                                    <td>
-                                                        <input id="w" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-
-                                                    <td><i onclick="deleteRow(this)" class="fa fa-trash-o fs-5 text-danger"></i></td>
-
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
+                                                    <td></td>
                                                 </tr>
 
                                             </tbody>
                                         </table>
-                                        <br>
-                                        <br>
-                                        <div class="text-end">
-                                            <button onclick="addRowOperaterCommision()" class="btn btn-info">Add Row</button>
-                                        </div>
-
-                                        <br><br>
-
                                     </div>
                                 </div>
                             </div>
+                        
                         </div>
+
+
 
 
                         <div class="col-lg-12 grid-margin stretch-card">
                             <div class="card">
-                                <div class="card-body">
-                                    <h4 class="card-title">Commission Method Vender</h4>
-                                    <p class="card-description">
-
-                                    </p>
-                                    <div class="table-responsive">
-
-                                        <table class="table">
-                                            <tbody>
-                                                <tr>
-                                                    <th>Operator</th>
-                                                    <th>Amount</th>
-                                                    <th>Guide</th>
-                                                    <th>Amount</th>
-                                                    <th>Driver</th>
-                                                    <th>Amount</th>
-                                                    <th>Total</th>
-                                                    <th></th>
-                                                </tr>
-
-                                                <tr>
-                                                    <td>
-                                                        <Select id="product" class="form-control card-title">
-                                                            <option value="0">Select</option>
-                                                            <?php
-                                                            $queryCategory = "SELECT * FROM product";
-                                                            $resultCategory = $db->query($queryCategory);
-                                                            if ($resultCategory) {
-                                                                for ($i = 0; $i < $resultCategory->num_rows; $i++) {
-
-                                                                    $row = $resultCategory->fetch_assoc();
-                                                            ?>
-                                                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['code']; ?> - <?php echo $row['prduct_name']; ?></option>
-                                                            <?php
-                                                                }
-                                                            } else {
-                                                                echo "Error: " . $db->error;
-                                                            }
-
-                                                            ?>
-
-                                                        </Select>
-                                                    </td>
-                                                    <td>
-                                                        <input onkeyup="calculateValu();" id="qty" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-                                                    <td>
-                                                        <input onkeyup="calculateValu();" id="rate" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-                                                    <td>
-                                                        <input id="totalValueData" class="form-control inpuFieldsBorders" type="text" disabled />
-                                                    </td>
-                                                    <td>
-                                                        <Select onchange="currencyCalculate();" id="currencyToIteamSelect" class="form-control card-title">
-                                                            <option value="">Select</option>
-                                                            <?php
-                                                            $queryCategory = "SELECT * FROM currency";
-                                                            $resultCategory = $db->query($queryCategory);
-                                                            if ($resultCategory) {
-                                                                for ($i = 0; $i < $resultCategory->num_rows; $i++) {
-
-                                                                    $row = $resultCategory->fetch_assoc();
-                                                            ?>
-                                                                    <option value="<?php echo $row['id']; ?>"><?php echo $row['currencyName']; ?></option>
-                                                            <?php
-                                                                }
-                                                            } else {
-                                                                echo "Error: " . $db->error;
-                                                            }
-
-                                                            ?>
-
-                                                        </Select>
-                                                    </td>
-                                                    <td>
-                                                        <input id="currencyRate" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-                                                    <td>
-                                                        <input id="currencyRate" class="form-control inpuFieldsBorders" type="text" />
-                                                    </td>
-
-                                                    <td><i onclick="deleteRow(this)" class="fa fa-trash-o fs-5 text-danger"></i></td>
-
-                                                </tr>
-
-                                            </tbody>
-                                        </table>
-                                        <br>
-                                        <br>
-                                        <div class="text-end">
-                                            <button onclick="addRowVenderCommission()" class="btn btn-info">Add Row</button>
-                                        </div>
-
-                                        <br><br>
-
-                                    </div>
+                                <div class="card-body text-end">
+                                    <button onclick="window.location = 'commission.php';" class="btn btn-dark">Go to Commission</button>
                                 </div>
                             </div>
                         </div>
-
-
-
 
                         <div class="col-lg-12 grid-margin stretch-card">
                             <div class="card">
@@ -919,7 +863,9 @@ require_once "connection_db.php";
                                     </div>
                                 </div>
                             </div>
+                        
                         </div>
+
                     </div>
 
                     <div class="col-12 d-none" id="onlordInactiveDiv">
@@ -961,7 +907,7 @@ require_once "connection_db.php";
                 <?php
                 function generateNextCodes($lastCode)
                 {
-                    $prefix = 'BILLNO/';
+                    $prefix = 'CUID/';
                     $number = (int)str_replace($prefix, '', $lastCode);
                     $nextNumber = $number + 1;
 

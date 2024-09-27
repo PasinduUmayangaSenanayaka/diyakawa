@@ -37,7 +37,7 @@ if (isset($_SESSION["admin_user"])) {
 
 
   <div class="d-lg-flex half">
-    <div class="bg order-1 order-md-2" style="background-image: url('images/loginbg.jpg');"></div>
+    <div class="bg order-1 order-md-2" style="background-image: url('images/diyakawaLOgin.jpg');"></div>
     <div class="contents order-2 order-md-1">
 
       <div class="container">

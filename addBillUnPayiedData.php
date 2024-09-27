@@ -2,7 +2,6 @@
 require "connection_db.php";
 if (isset($_POST)) {
 
-    $cid = $_POST['cid'];
     $project = $_POST['project'];
     $location = $_POST['location'];
     $pxg = $_POST['pxg'];
@@ -14,10 +13,10 @@ if (isset($_POST)) {
     $vender = $_POST['vender'];
     $operater = $_POST['operater'];
     $billId = $_POST['billId'];
-    $date = $_POST['date'];
 
-    if (empty($cid)) {
-        echo "Please select Custormer";
+
+    if (empty($billId)) {
+        echo "Please select Valide Bill for Update.";
     } else {
         $query = "SELECT * FROM billing_tb WHERE job_no = ?";
         $stmt = $db->prepare($query);
@@ -28,26 +27,45 @@ if (isset($_POST)) {
             $resultCategory = $stmt->get_result();
 
             if ($resultCategory->num_rows != 0) {
-                echo "This Bill NO already exists.";
-            } else {
 
-                $insertQuery = "INSERT INTO billing_tb (date_billing, project_id, location_id,company_id , 
-                operetor_id ,job_no,tour_no,vender_id ,pax_amount,stutas_id,
-                payment_method_id ,traverler_typr_id ,costormer_id,status_paid) 
-                        VALUES (?, ?, ?, ?, ?, ?, ?,?, ?, ?, ?,?,?,?)";
-                $insertStmt = $db->prepare($insertQuery);
+                $updateQuery = "UPDATE billing_tb 
+                SET project_id = ?, location_id = ?, company_id = ?, 
+                    operetor_id = ?, tour_no = ?, vender_id = ?, pax_amount = ?, 
+                    stutas_id = ?, payment_method_id = ?, traverler_typr_id = ?, 
+                    status_paid = ? 
+                WHERE job_no = ?";
 
-                if ($insertStmt) {
-                    $status = 0;
-                    $insertStmt->bind_param("siiiissisiiiii",  $date, $project, $location, $company, $operater, $billId,$tourno,$vender,$pxg,$billstatus,$billmethod,$tourtype,$cid,$status);
-                    if ($insertStmt->execute()) {
-                        echo "success";
+
+                $updateStmt = $db->prepare($updateQuery);
+
+                if ($updateStmt) {
+
+                    $project = $project;
+                    $location = $location;
+                    $company = $company;
+                    $operater = $operater;
+                    $tourno = $tourno;
+                    $vender = $vender;
+                    $pxg = $pxg;
+                    $status = 1;
+                    $billmethod = $billmethod;
+                    $tourtype = $tourtype;
+                    $job_no = $billId;
+
+                    $updateStmt->bind_param("iiiisisiiiis", $project, $location, $company, $operater, $tourno, $vender, $pxg, $billstatus, $billmethod, $tourtype, $status,$job_no);
+
+                    if ($updateStmt->execute()) {
+                        echo "Row updated successfully!";
                     } else {
-                        echo "Error adding employee: " . $insertStmt->error;
+                        echo "Error updating row: " . $updateStmt->error;
                     }
                 } else {
-                    echo "Error preparing insert statement: " . $db->error;
+                    echo "Error preparing update statement: " . $db->error;
                 }
+
+                $updateStmt->close();
+            } else {
+                echo "Invalide Bill Number, Please Try again later.";
             }
         } else {
             echo "Error preparing employee check statement: " . $db->error;

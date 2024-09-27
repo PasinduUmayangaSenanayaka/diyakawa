@@ -1,91 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Searchable Dropdown</title>
+    <style>
+        /* Basic styling for the dropdown */
+        .dropdown {
+            position: relative;
+            display: inline-block;
+            width: 200px;
+        }
+        .dropdown input {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .dropdown-list {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ccc;
+            z-index: 1;
+            display: none;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .dropdown-list div {
+            padding: 8px;
+            cursor: pointer;
+        }
+        .dropdown-list div:hover {
+            background-color: #f1f1f1;
+        }
+    </style>
+</head>
+<body>
 
-<!-- Table to hold the dynamically added rows -->
-<table id="currencyTable">
-    <thead>
-        <tr>
-            <th>Currency</th>
-            <th>Exchange Rate</th>
-            <th>Amount</th>
-            <th>Total</th>
-            <th>Action</th>
-        </tr>
-    </thead>
-    <tbody id="currencyTableBody">
-        <!-- Rows will be added dynamically here -->
-    </tbody>
-</table>
-
-<br>
-<button onclick="addRow();" class="btn btn-info">Add Row</button>
-
-<br>
-<div>
-    <h6 style="border: none;" class="form-control fs-6 text-end">
-        Total Cash: <input id="grandTotal" type="text" disabled>
-    </h6>
+<div class="dropdown">
+    <input type="text" id="searchInput" placeholder="Search..." onkeyup="filterFunction()">
+    <div id="dropdownList" class="dropdown-list">
+        <div onclick="selectOption('Option 1')">Option 1</div>
+        <div onclick="selectOption('Option 2')">Option 2</div>
+        <div onclick="selectOption('Option 3')">Option 3</div>
+        <div onclick="selectOption('Option 4')">Option 4</div>
+        <div onclick="selectOption('Option 5')">Option 5</div>
+        <!-- Add more options as needed -->
+    </div>
 </div>
 
-<!-- JavaScript for dynamic row addition and total calculation -->
 <script>
-    let rowCount = 0;
+    function filterFunction() {
+        var input, filter, dropdownList, div, i;
+        input = document.getElementById("searchInput");
+        filter = input.value.toLowerCase();
+        dropdownList = document.getElementById("dropdownList");
+        div = dropdownList.getElementsByTagName("div");
 
-    // Function to add a new row dynamically
-    function addRow() {
-        rowCount++;  // Increment rowCount to ensure unique IDs
+        // Show the dropdown if the input is not empty
+        dropdownList.style.display = filter ? "block" : "none";
 
-        // Create a new row with unique IDs for the input fields
-        const newRow = `
-            <tr>
-                <td>
-                    <select class="form-control">
-                        <option value="">Select</option>
-                        <?php echo $options; ?>
-                    </select>
-                </td>
-                <td><input onchange="calculateRowTotal(${rowCount})" class="form-control text-end" placeholder="00.00" id="exchangeRate${rowCount}" type="number" step="0.01"></td>
-                <td><input onchange="calculateRowTotal(${rowCount})" class="form-control text-end" placeholder="00.00" id="amount${rowCount}" type="number" step="0.01"></td>
-                <td><span id="rowTotal${rowCount}">0.00</span></td>
-                <td><i class="fa fa-trash-o fs-5 text-danger" onclick="deleteRow(this)"></i></td>
-            </tr>
-        `;
-
-        // Append the new row to the table body
-        document.getElementById("currencyTableBody").insertAdjacentHTML('beforeend', newRow);
+        for (i = 0; i < div.length; i++) {
+            if (div[i].innerHTML.toLowerCase().indexOf(filter) > -1) {
+                div[i].style.display = "";
+            } else {
+                div[i].style.display = "none";
+            }
+        }
     }
 
-    // Function to calculate the total for a single row
-    function calculateRowTotal(rowId) {
-        const exchangeRate = parseFloat(document.getElementById(`exchangeRate${rowId}`).value) || 0;
-        const amount = parseFloat(document.getElementById(`amount${rowId}`).value) || 0;
-        const rowTotal = exchangeRate * amount;
-
-        // Update the row total
-        document.getElementById(`rowTotal${rowId}`).textContent = rowTotal.toFixed(2);
-
-        // Recalculate the grand total
-        updateGrandTotal();
+    function selectOption(option) {
+        document.getElementById("searchInput").value = option; // Set the input value to the selected option
+        document.getElementById("dropdownList").style.display = "none"; // Hide the dropdown after selection
     }
 
-    // Function to update the grand total across all rows
-    function updateGrandTotal() {
-        let grandTotal = 0;
-
-        // Get all row totals and sum them
-        const rowTotals = document.querySelectorAll("[id^='rowTotal']");
-        rowTotals.forEach(rowTotal => {
-            grandTotal += parseFloat(rowTotal.textContent) || 0;
-        });
-
-        // Update the grand total display
-        document.getElementById("grandTotal").value = grandTotal.toFixed(2);
-    }
-
-    // Function to delete a row
-    function deleteRow(element) {
-        const row = element.closest('tr');
-        row.remove();
-
-        // Recalculate the grand total after a row is deleted
-        updateGrandTotal();
+    // Hide the dropdown if clicking outside of it
+    window.onclick = function(event) {
+        if (!event.target.matches('#searchInput')) {
+            document.getElementById("dropdownList").style.display = "none";
+        }
     }
 </script>
+
+</body>
+</html>
